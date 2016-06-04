@@ -11,15 +11,16 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import com.ensogo.movie.R;
+import com.ensogo.movie.listing.IMoviesListingPresenter;
 import com.ensogo.movie.listing.MoviesListingPresenter;
 
 public class SortingDialogFragment extends DialogFragment implements ISortingDialogView, RadioGroup.OnCheckedChangeListener
 {
     private RadioGroup mSortingOptionsGroup;
-    private static MoviesListingPresenter mMoviesListingPresenter;
+    private static IMoviesListingPresenter mMoviesListingPresenter;
     private ISortingDialogPresenter mSortingDialogPresenter;
 
-    public static SortingDialogFragment newInstance(MoviesListingPresenter moviesListingPresenter)
+    public static SortingDialogFragment newInstance(IMoviesListingPresenter moviesListingPresenter)
     {
         mMoviesListingPresenter = moviesListingPresenter;
         return new SortingDialogFragment();

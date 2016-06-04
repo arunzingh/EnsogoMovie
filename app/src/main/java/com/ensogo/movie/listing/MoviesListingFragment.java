@@ -26,9 +26,10 @@ import rx.Subscription;
 public class MoviesListingFragment extends Fragment implements IMoviesListingView
 {
     private RecyclerView.Adapter mAdapter;
-    private List<Movie> mMovies = new ArrayList<>(20);
-    private MoviesListingPresenter mMoviesPresenter;
+    private List<Movie> mMovies;
+    private IMoviesListingPresenter mMoviesPresenter;
     private Subscription mMoviesSubscription;
+    private Subscription mFavoritesSubscription;
     private Callback mCallback;
 
     public MoviesListingFragment()
@@ -47,6 +48,8 @@ public class MoviesListingFragment extends Fragment implements IMoviesListingVie
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+        mMovies = new ArrayList<>(20);
         mMoviesPresenter = new MoviesListingPresenter(this);
         setHasOptionsMenu(true);
     }
@@ -62,8 +65,11 @@ public class MoviesListingFragment extends Fragment implements IMoviesListingVie
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState)
     {
-        super.onViewCreated(view, savedInstanceState);
-        mMoviesSubscription = mMoviesPresenter.displayMovies();
+        super.onActivityCreated(savedInstanceState);
+        if (mMovies.isEmpty()) {
+            mMoviesSubscription = mMoviesPresenter.displayMovies();
+            mFavoritesSubscription = mMoviesPresenter.registerFavoriteChangeEvent();
+        }
     }
 
     @Override
@@ -116,13 +122,13 @@ public class MoviesListingFragment extends Fragment implements IMoviesListingVie
     @Override
     public void loadingStarted()
     {
-        Toast.makeText(getContext(), R.string.loading_movies, Toast.LENGTH_LONG).show();
+        Toast.makeText(getContext(), R.string.loading_movies, Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void loadingFailed(String errorMessage)
     {
-        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_LONG).show();
+        Toast.makeText(getContext(), errorMessage, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -138,7 +144,9 @@ public class MoviesListingFragment extends Fragment implements IMoviesListingVie
         {
             mMoviesSubscription.unsubscribe();
         }
-
+        if (mFavoritesSubscription != null && !mFavoritesSubscription.isUnsubscribed()) {
+            mFavoritesSubscription.unsubscribe();
+        }
         super.onDestroyView();
     }
 
