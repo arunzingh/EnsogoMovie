@@ -42,4 +42,16 @@ public class MovieDetailsActivity extends AppCompatActivity
         }
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onBackPressed() {
+        MovieDetailsFragment fragment = (MovieDetailsFragment) getSupportFragmentManager().findFragmentById(R.id.movie_details_container);
+        if (fragment != null
+                && fragment.getFavoriteReasonDialog() != null
+                && fragment.getFavoriteReasonDialog().isShowing()){
+                fragment.getFavoriteReasonDialog().dismiss();
+        } else {
+            super.onBackPressed();
+        }
+    }
 }

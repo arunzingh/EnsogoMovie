@@ -13,11 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import rx.Observable;
+import rx.subjects.PublishSubject;
+
 public class FavoritesStore
 {
     private SharedPreferences pref;
     private static final int PRIVATE_MODE = 0;
     private static final String PREF_NAME = "FavoritesStore";
+
+    private static final PublishSubject<FavoriteChangeEvent> subject = PublishSubject.create();
 
     public FavoritesStore()
     {
@@ -32,6 +37,7 @@ public class FavoritesStore
         String movieJson = jsonAdapter.toJson(movie);
         editor.putString(movie.getId(), movieJson);
         editor.apply();
+        sendFavoriteChangeEvent();
     }
 
     public boolean isFavorite(String id)
@@ -76,5 +82,15 @@ public class FavoritesStore
         SharedPreferences.Editor editor = pref.edit();
         editor.remove(id);
         editor.apply();
+        sendFavoriteChangeEvent();
+    }
+
+    private void sendFavoriteChangeEvent() {
+        FavoriteChangeEvent event = new FavoriteChangeEvent();
+        subject.onNext(event);
+    }
+
+    public static Observable<FavoriteChangeEvent> getFavoriteChangeEvents() {
+        return subject;
     }
 }

@@ -8,18 +8,22 @@ import java.util.List;
 
 public class FavoritesInteractor implements IFavoritesInteractor
 {
+    private FavoritesStore mFavoritesStore;
+
+    public FavoritesInteractor() {
+        mFavoritesStore = new FavoritesStore();
+    }
+
     @Override
     public void setFavorite(Movie movie)
     {
-        FavoritesStore favoritesStore = new FavoritesStore();
-        favoritesStore.setFavorite(movie);
+        mFavoritesStore.setFavorite(movie);
     }
 
     @Override
     public boolean isFavorite(String id)
     {
-        FavoritesStore favoritesStore = new FavoritesStore();
-        return favoritesStore.isFavorite(id);
+        return mFavoritesStore.isFavorite(id);
     }
 
     @Override
@@ -27,8 +31,7 @@ public class FavoritesInteractor implements IFavoritesInteractor
     {
         try
         {
-            FavoritesStore favoritesStore = new FavoritesStore();
-            return favoritesStore.getFavorites();
+            return mFavoritesStore.getFavorites();
         } catch (IOException ignored)
         {
             return new ArrayList<>(0);
@@ -38,7 +41,6 @@ public class FavoritesInteractor implements IFavoritesInteractor
     @Override
     public void unFavorite(String id)
     {
-        FavoritesStore favoritesStore = new FavoritesStore();
-        favoritesStore.unfavorite(id);
+        mFavoritesStore.unfavorite(id);
     }
 }

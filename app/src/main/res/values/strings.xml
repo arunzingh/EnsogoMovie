@@ -12,4 +12,8 @@
     <string name="favorites">Favorites</string>
     <string name="highest_rated">Highest Rated</string>
     <string name="most_popular">Most Popular</string>
+    <string name="fav_hint">Why you like it ?</string>
+    <string name="fav_dialog_title">Favorite Reason</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
 </resources>

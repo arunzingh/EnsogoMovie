@@ -1,6 +1,7 @@
 package com.ensogo.movie.details;
 
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -10,11 +11,15 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -38,7 +43,7 @@ import rx.Subscription;
  */
 public class MovieDetailsFragment extends Fragment implements IMovieDetailsView, View.OnClickListener
 {
-    private MovieDetailsPresenter mMovieDetailsPresenter;
+    private IMovieDetailsPresenter mMovieDetailsPresenter;
     private ImageView mMoviePoster;
     private TextView mMovieTitle;
     private TextView mMovieReleaseDate;
@@ -52,6 +57,10 @@ public class MovieDetailsFragment extends Fragment implements IMovieDetailsView,
     private LinearLayout mReviewsView;
     private FloatingActionButton mFavorite;
     private Movie mMovie;
+    private boolean isFavoriteMovie;
+    private AlertDialog mFavoriteReasonDialog;
+    private TextView mFavoriteReason;
+    private TextView mFavoriteTitle;
 
     public MovieDetailsFragment()
     {
@@ -113,6 +122,9 @@ public class MovieDetailsFragment extends Fragment implements IMovieDetailsView,
         mReviewsLabel = (TextView) rootView.findViewById(R.id.reviews_label);
         mReviewsView = (LinearLayout) rootView.findViewById(R.id.reviews);
         mFavorite = (FloatingActionButton) rootView.findViewById(R.id.favorite);
+        mFavoriteReason = (TextView) rootView.findViewById(R.id.favorite_reason);
+        mFavoriteTitle = (TextView) rootView.findViewById(R.id.favorite_title);
+        mFavorite.setOnClickListener(this);
     }
 
     private void setToolbar(View rootView)
@@ -151,6 +163,15 @@ public class MovieDetailsFragment extends Fragment implements IMovieDetailsView,
         mMovieOverview.setText(movie.getOverview());
         mTrailersSub = mMovieDetailsPresenter.showTrailers(movie);
         mMovieDetailsPresenter.showReviews(movie);
+        displayFavoriteReason(movie);
+    }
+
+    private void displayFavoriteReason(Movie movie) {
+        if (!TextUtils.isEmpty(movie.getFavouriteReason())) {
+            mFavoriteTitle.setVisibility(View.VISIBLE);
+            mFavoriteReason.setVisibility(View.VISIBLE);
+            mFavoriteReason.setText(mMovie.getFavouriteReason());
+        }
     }
 
     @Override
@@ -220,6 +241,7 @@ public class MovieDetailsFragment extends Fragment implements IMovieDetailsView,
     @Override
     public void showFavorited()
     {
+        isFavoriteMovie = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
         {
             mFavorite.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_favorite_border_white_24dp, getContext().getTheme()));
@@ -227,13 +249,14 @@ public class MovieDetailsFragment extends Fragment implements IMovieDetailsView,
         {
             mFavorite.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_favorite_border_white_24dp));
         }
+        displayFavoriteReason(mMovie);
     }
 
     @Override
     public void showUnFavorited()
     {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-        {
+        isFavoriteMovie = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             mFavorite.setImageDrawable(getContext().getResources().getDrawable(R.drawable.ic_favorite_white_24dp, getContext().getTheme()));
         } else
         {
@@ -272,9 +295,49 @@ public class MovieDetailsFragment extends Fragment implements IMovieDetailsView,
         }
     }
 
+    private void showFavoriteReasonDialog() {
+        mFavoriteReasonDialog = buildFavoriteAlertDialog();
+        mFavoriteReasonDialog.setCanceledOnTouchOutside(true);
+        mFavoriteReasonDialog.show();
+    }
+
+    @NonNull
+    private AlertDialog buildFavoriteAlertDialog() {
+        View dialogView = LayoutInflater.from(getActivity()).inflate(R.layout.favourite_input_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+        alertDialogBuilder.setTitle(getString(R.string.fav_dialog_title));
+        alertDialogBuilder.setView(dialogView);
+        final EditText userInput = (EditText) dialogView.findViewById(R.id.reason_text);
+        // set dialog message
+        alertDialogBuilder
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.save),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,
+                                                int id) {
+                                EditText reasonText = (EditText) ((AlertDialog) dialog).findViewById(R.id.reason_text);
+                                mMovie.setFavouriteReason(reasonText.getText().toString());
+                                mMovieDetailsPresenter.onFavoriteClick(mMovie);
+                            }
+                        })
+                .setNegativeButton(getString(R.string.cancel),
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,
+                                                int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+        return alertDialogBuilder.create();
+    }
+
     private void onFavoriteClick()
     {
-        mMovieDetailsPresenter.onFavoriteClick(mMovie);
+        if (isFavoriteMovie) {
+            mMovieDetailsPresenter.onFavoriteClick(mMovie);
+        } else {
+            showFavoriteReasonDialog();
+        }
     }
 
     @Override
@@ -282,5 +345,9 @@ public class MovieDetailsFragment extends Fragment implements IMovieDetailsView,
     {
         RxUtils.unsubscribe(mTrailersSub);
         super.onDestroyView();
+    }
+
+    public AlertDialog getFavoriteReasonDialog() {
+        return mFavoriteReasonDialog;
     }
 }
